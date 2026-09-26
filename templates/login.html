@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusGuard — Secure Access</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #06080f;
+      --surface: rgba(15, 23, 42, 0.6);
+      --surface-solid: #111827;
+      --border: rgba(51, 65, 85, 0.5);
+      --text: #f1f5f9;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --red: #ef4444;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --font: 'Inter', -apple-system, sans-serif;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --surface: rgba(255, 255, 255, 0.7);
+      --surface-solid: #ffffff;
+      --border: rgba(203, 213, 225, 0.8);
+      --text: #0f172a;
+      --text2: #475569;
+      --text3: #94a3b8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ═══════════════════════════════════════════
+       ANIMATED BACKGROUND LAYERS
+       ═══════════════════════════════════════════ */
+    
+    /* Layer 1: Animated gradient orbs */
+    .bg-gradient {
+      position: fixed; inset: 0; z-index: 0;
+      background: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 40%),
+                  radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.06), transparent 40%);
+    }
+    
+    .bg-orb {
+      position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4; z-index: 0;
+      animation: float 20s ease-in-out infinite;
+    }
+    
+    .orb-1 { width: 400px; height: 400px; background: rgba(99, 102, 241, 0.15); top: -100px; left: -100px; }
+    .orb-2 { width: 300px; height: 300px; background: rgba(139, 92, 246, 0.1); bottom: -50px; right: -50px; animation-delay: -5s; }
+    .orb-3 { width: 250px; height: 250px; background: rgba(99, 102, 241, 0.08); top: 50%; left: 50%; animation-delay: -10s; }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* Layer 2: Animated grid */
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image: 
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    /* Layer 3: Scanning line */
+    .bg-scan {
+      position: fixed; left: 0; right: 0; height: 2px; z-index: 0;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
+      animation: scanLine 8s linear infinite;
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+
+    @keyframes scanLine {
+      0% { top: -2px; }
+      100% { top: 100%; }
+    }
+
+    /* Layer 4: Floating particles */
+    .particles {
+      position: fixed; inset: 0; z-index: 0; overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0.3;
+      animation: particleFloat linear infinite;
+    }
+
+    .particle:nth-child(1) { left: 10%; animation-duration: 15s; animation-delay: 0s; }
+    .particle:nth-child(2) { left: 20%; animation-duration: 18s; animation-delay: 2s; }
+    .particle:nth-child(3) { left: 30%; animation-duration: 12s; animation-delay: 4s; }
+    .particle:nth-child(4) { left: 40%; animation-duration: 20s; animation-delay: 1s; }
+    .particle:nth-child(5) { left: 50%; animation-duration: 16s; animation-delay: 3s; }
+    .particle:nth-child(6) { left: 60%; animation-duration: 14s; animation-delay: 5s; }
+    .particle:nth-child(7) { left: 70%; animation-duration: 19s; animation-delay: 2s; }
+    .particle:nth-child(8) { left: 80%; animation-duration: 17s; animation-delay: 4s; }
+    .particle:nth-child(9) { left: 90%; animation-duration: 13s; animation-delay: 1s; }
+    .particle:nth-child(10) { left: 15%; animation-duration: 21s; animation-delay: 3s; }
+
+    @keyframes particleFloat {
+      0% { transform: translateY(100vh) scale(0); opacity: 0; }
+      10% { opacity: 0.3; }
+      90% { opacity: 0.3; }
+      100% { transform: translateY(-100vh) scale(1); opacity: 0; }
+    }
+
+    /* Layer 5: Pulsing security rings */
+    .security-ring {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 50%;
+      z-index: 0;
+      animation: ringPulse 4s ease-out infinite;
+    }
+
+    .ring-1 { width: 300px; height: 300px; animation-delay: 0s; }
+    .ring-2 { width: 500px; height: 500px; animation-delay: 1s; }
+    .ring-3 { width: 700px; height: 700px; animation-delay: 2s; }
+
+    @keyframes ringPulse {
+      0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+      100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+
+    /* Container & Views */
+    .container {
+      position: relative; z-index: 1; width: 100%; max-width: 480px; padding: 20px;
+    }
+    
+    .view {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .view.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .view.hidden {
+      opacity: 0;
+      transform: translate(-50%, -45%) scale(0.95);
+    }
+
+    /* LOADING SCREEN */
+    .loading-screen { text-align: center; }
+    
+    .loading-logo {
+      width: 100px; height: 100px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 50px;
+      margin: 0 auto 24px;
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+      animation: logoPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 30px 80px rgba(99, 102, 241, 0.6); }
+    }
+    
+    .loading-title {
+      font-size: 32px; font-weight: 800; letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--text), var(--text2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    
+    .loading-subtitle { font-size: 14px; color: var(--text3); margin-bottom: 40px; }
+    
+    .loading-bar {
+      width: 200px; height: 4px;
+      background: rgba(99, 102, 241, 0.15);
+      border-radius: 2px; margin: 0 auto; overflow: hidden; position: relative;
+    }
+    
+    .loading-progress {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      border-radius: 2px; width: 0%;
+      animation: loadProgress 2.5s ease-out forwards;
+      box-shadow: 0 0 10px var(--accent);
+    }
+    
+    @keyframes loadProgress { 0% { width: 0%; } 100% { width: 100%; } }
+    
+    .loading-text {
+      font-size: 12px; color: var(--text3); margin-top: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      animation: blink 1s ease-in-out infinite;
+    }
+    
+    @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.3; } }
+
+    /* Landing View */
+    .landing-content { text-align: center; }
+    
+    .logo-large {
+      display: flex; flex-direction: column; align-items: center; gap: 16px; margin-bottom: 24px;
+    }
+    
+    .logo-icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 40px;
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+      animation: scaleIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    
+    @keyframes scaleIn { from { opacity: 0; transform: scale(0.5); } to { opacity: 1; transform: scale(1); } }
+
+    .logo-large h1 {
+      font-size: 42px; font-weight: 800; letter-spacing: -0.03em;
+      background: linear-gradient(135deg, var(--text), var(--text2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    
+    .tagline { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .sub-tagline { font-size: 14px; color: var(--text3); line-height: 1.6; max-width: 360px; margin: 0 auto 40px; }
+
+    .btn-primary-large {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      color: #fff; border: none; border-radius: 50px;
+      padding: 16px 32px; font-size: 16px; font-weight: 600;
+      cursor: pointer; transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-primary-large:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+    }
+    
+    .btn-primary-large svg { transition: transform 0.3s ease; }
+    .btn-primary-large:hover svg { transform: translateX(4px); }
+
+    .security-badges {
+      display: flex; justify-content: center; gap: 16px; margin-top: 48px;
+      font-size: 12px; color: var(--text3); font-weight: 500;
+    }
+
+    /* Login View */
+    .login-card {
+      background: var(--surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+      animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+    }
+    
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .back-btn {
+      background: none; border: none; color: var(--text3);
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; gap: 6px; margin-bottom: 24px;
+      transition: color 0.2s;
+    }
+    
+    .back-btn:hover { color: var(--text); }
+
+    .login-header { text-align: center; margin-bottom: 32px; }
+    .logo-small { font-size: 32px; margin-bottom: 12px; }
+    .login-header h2 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+    .login-header p { font-size: 14px; color: var(--text3); }
+
+    .input-group { margin-bottom: 20px; }
+    .input-group label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    
+    .input-wrap { position: relative; }
+    
+    .input-icon {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--text3); transition: color 0.2s;
+    }
+    
+    .input-wrap input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 12px 14px 12px 42px;
+      color: var(--text); font-size: 14px; font-family: var(--font);
+      outline: none; transition: all 0.2s;
+    }
+    
+    .input-wrap input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+    
+    .input-wrap input:focus + .input-icon, 
+    .input-wrap input:focus ~ .input-icon { color: var(--accent); }
+
+    .pw-toggle {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text3);
+      cursor: pointer; padding: 4px; transition: color 0.2s;
+    }
+    
+    .pw-toggle:hover { color: var(--text); }
+
+    .error-box {
+      background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: var(--radius-sm); padding: 12px;
+      color: #fca5a5; font-size: 13px; margin-bottom: 20px;
+      display: none; align-items: center; gap: 8px;
+    }
+    
+    .error-box.show { display: flex; }
+
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      border: none; border-radius: var(--radius-sm);
+      color: #fff; font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: all 0.3s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    
+    .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .spinner { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .login-footer {
+      text-align: center; margin-top: 24px;
+      font-size: 12px; color: var(--text3);
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      position: fixed; top: 24px; right: 24px; z-index: 10;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 50px; width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.3s; font-size: 18px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .theme-toggle:hover { transform: scale(1.05); border-color: var(--accent); }
+    
+    [data-theme="dark"] .icon-sun { display: none; }
+    [data-theme="light"] .icon-moon { display: none; }
+  </style>
+</head>
+<body>
+  <!-- Animated Background Layers -->
+  <div class="bg-gradient"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+  <div class="bg-grid"></div>
+  <div class="bg-scan"></div>
+  
+  <!-- Floating Particles -->
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <!-- Pulsing Security Rings -->
+  <div class="security-ring ring-1"></div>
+  <div class="security-ring ring-2"></div>
+  <div class="security-ring ring-3"></div>
+
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Theme">
+    <span class="icon-sun">☀️</span>
+    <span class="icon-moon">🌙</span>
+  </button>
+
+  <main class="container">
+    <!-- LOADING SCREEN -->
+    <section class="view loading-screen active" id="loadingView">
+      <div class="loading-logo">🛡️</div>
+      <div class="loading-title">CampusGuard</div>
+      <div class="loading-subtitle">Intelligent Vision Security System</div>
+      <div class="loading-bar">
+        <div class="loading-progress"></div>
+      </div>
+      <div class="loading-text">Initializing system...</div>
+    </section>
+
+    <!-- LANDING VIEW -->
+    <section class="view landing-view" id="landingView">
+      <div class="landing-content">
+        <div class="logo-large">
+          <div class="logo-icon">🛡️</div>
+          <h1>CampusGuard</h1>
+        </div>
+        <p class="tagline">Intelligent Vision Security System</p>
+        <p class="sub-tagline">Real-time AI threat detection, automated alerts, and comprehensive campus monitoring.</p>
+        
+        <button class="btn-primary-large" onclick="showLogin()">
+          <span>Access Secure Dashboard</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        
+        <div class="security-badges">
+          <span>🔒 End-to-End Encrypted</span>
+          <span>🛡️ Role-Based Access</span>
+          <span>⚡ Real-Time Processing</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGIN VIEW -->
+    <section class="view login-view" id="loginView">
+      <div class="login-card">
+        <button class="back-btn" onclick="showLanding()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+
+        <div class="login-header">
+          <div class="logo-small">🛡️</div>
+          <h2>Welcome Back</h2>
+          <p>Enter your credentials to access the dashboard.</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <label for="username">Username</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="username" placeholder="admin" autocomplete="username" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="input-wrap">
+              <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+              <button type="button" class="pw-toggle" onclick="togglePw()" aria-label="Toggle password visibility">
+                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="error-box" id="errorBox"></div>
+
+          <button type="submit" class="btn-submit" id="loginBtn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader" style="display:none;">
+              <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            </span>
+          </button>
+        </form>
+
+        <div class="login-footer">
+          <p>Secured with bcrypt encryption & brute-force protection</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        showLandingFromLoading();
+      }, 2500);
+    });
+
+    function showLandingFromLoading() {
+      document.getElementById('loadingView').classList.remove('active');
+      document.getElementById('loadingView').classList.add('hidden');
+      
+      setTimeout(() => {
+        document.getElementById('landingView').classList.add('active');
+      }, 100);
+    }
+
+    function showLogin() {
+      document.getElementById('landingView').classList.add('hidden');
+      document.getElementById('landingView').classList.remove('active');
+      
+      setTimeout(() => {
+        document.getElementById('loginView').classList.add('active');
+      }, 100);
+    }
+
+    function showLanding() {
+      document.getElementById('loginView').classList.remove('active');
+      
+      setTimeout(() => {
+        document.getElementById('landingView').classList.remove('hidden');
+        document.getElementById('landingView').classList.add('active');
+        document.getElementById('loginForm').reset();
+        document.getElementById('errorBox').classList.remove('show');
+      }, 100);
+    }
+
+    function togglePw() {
+      const pw = document.getElementById('password');
+      const icon = document.getElementById('eyeIcon');
+      if (pw.type === 'password') {
+        pw.type = 'text';
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        pw.type = 'password';
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const btnText = btn.querySelector('.btn-text');
+      const btnLoader = btn.querySelector('.btn-loader');
+      const errBox = document.getElementById('errorBox');
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!username || !password) {
+        showError('Please enter both username and password.');
+        return;
+      }
+
+      btn.disabled = true;
+      btnText.textContent = 'Authenticating...';
+      btnLoader.style.display = 'block';
+      errBox.classList.remove('show');
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          btnText.textContent = '✅ Success!';
+          setTimeout(() => {
+            window.location.href = data.redirect || '/dashboard';
+          }, 500);
+        } else {
+          showError(data.message || 'Invalid credentials. Please try again.');
+          btn.disabled = false;
+          btnText.textContent = 'Sign In';
+          btnLoader.style.display = 'none';
+        }
+      } catch (error) {
+        showError('Connection error. Is the server running?');
+        btn.disabled = false;
+        btnText.textContent = 'Sign In';
+        btnLoader.style.display = 'none';
+      }
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById('errorBox');
+      errBox.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${msg}`;
+      errBox.classList.add('show');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.getElementById('loginView').classList.contains('active')) {
+        handleLogin(e);
+      }
+    });
+  </script>
+</body>
+</html>

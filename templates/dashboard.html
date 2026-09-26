@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CampusGuard — Security Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #06080f; --bg2: #0b0f1a;
+    --surface: rgba(15, 23, 42, 0.65); --surface-solid: #111827;
+    --surface-hover: rgba(30, 41, 59, 0.7);
+    --border: rgba(51, 65, 85, 0.5); --border-hover: rgba(99, 102, 241, 0.4);
+    --text: #f1f5f9; --text2: #64748b; --text3: #475569;
+    --accent: #6366f1; --accent2: #818cf8; --accent-glow: rgba(99, 102, 241, 0.25);
+    --green: #10b981; --green-glow: rgba(16, 185, 129, 0.3);
+    --red: #ef4444; --red-glow: rgba(239, 68, 68, 0.2);
+    --orange: #f59e0b; --orange-glow: rgba(245, 158, 11, 0.2);
+    --yellow: #eab308;
+    --radius: 12px; --radius-sm: 8px; --radius-xs: 6px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  [data-theme="light"] {
+    --bg: #f0f2f7; --bg2: #e8ecf4;
+    --surface: rgba(255, 255, 255, 0.75); --surface-solid: #ffffff;
+    --surface-hover: rgba(255, 255, 255, 0.9);
+    --border: rgba(203, 213, 225, 0.7); --border-hover: rgba(99, 102, 241, 0.35);
+    --text: #0f172a; --text2: #64748b; --text3: #94a3b8;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: var(--font);
+    display: flex; flex-direction: column;
+    transition: background var(--transition), color var(--transition);
+  }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+    background-size: 24px 24px; opacity: 0.3; pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: ''; position: fixed; top: -200px; left: 50%;
+    transform: translateX(-50%); width: 800px; height: 500px;
+    background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+    pointer-events: none; z-index: 0; opacity: 0.5;
+  }
+  nav, .stats, .main { position: relative; z-index: 1; }
+
+  @keyframes fadeSlideDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeSlideRight { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+  @keyframes pulseGlow { 0%,100% { opacity: 1; box-shadow: 0 0 6px var(--green-glow); } 50% { opacity: 0.5; box-shadow: 0 0 12px var(--green-glow); } }
+  @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  @keyframes scanLine { 0% { top: -4px; } 100% { top: 100%; } }
+  @keyframes alertSlideIn { from { opacity: 0; transform: translateX(20px) scale(0.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+  @keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+  @keyframes bootFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bracketIn { from { opacity: 0; transform: scale(1.3); } to { opacity: 1; transform: scale(1); } }
+  @keyframes gridReveal { from { opacity: 0; } to { opacity: 0.4; } }
+  @keyframes flashIn { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes recordingPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.15); } }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(100%) scale(0.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
+  @keyframes toastOut { from { opacity: 1; transform: translateX(0) scale(1); } to { opacity: 0; transform: translateX(100%) scale(0.9); } }
+  @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+  @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes lightboxIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes lightboxImgIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
+  @keyframes lightboxImgOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.9); } }
+  @keyframes zoomPulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+
+  /* NAV */
+  nav {
+    background: var(--surface); backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px; height: 56px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; animation: fadeSlideDown 0.5s ease both;
+  }
+  .logo {
+    font-size: 17px; font-weight: 800; letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), #a78bfa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; display: flex; align-items: center; gap: 8px;
+  }
+  .logo-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-radius: var(--radius-xs);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; -webkit-text-fill-color: white;
+    box-shadow: 0 2px 10px var(--accent-glow);
+  }
+  .logo span {
+    font-size: 10px; font-weight: 500;
+    -webkit-text-fill-color: var(--text3);
+    margin-left: 4px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .cam-status {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--text2);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 50px; transition: all var(--transition);
+  }
+  .cam-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: all var(--transition); }
+  .cam-dot.active {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green-glow), 0 0 16px var(--green-glow);
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .theme-btn, .logout-btn {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-xs); padding: 6px 14px;
+    color: var(--text2); font-size: 11px; font-weight: 500;
+    font-family: var(--font); cursor: pointer; transition: all var(--transition);
+  }
+  .theme-btn:hover, .logout-btn:hover {
+    border-color: var(--accent); color: var(--text);
+    background: var(--surface-hover); transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .theme-btn:active, .logout-btn:active { transform: translateY(0) scale(0.97); }
+  .user-chip {
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-radius: 50px; padding: 6px 14px;
+    font-size: 11px; font-weight: 600; color: #fff;
+    box-shadow: 0 2px 10px var(--accent-glow); transition: all var(--transition);
+  }
+  .user-chip:hover { box-shadow: 0 4px 20px var(--accent-glow); transform: translateY(-1px); }
+
+  /* STATS */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px 20px; flex-shrink: 0; }
+  .stat {
+    background: var(--surface); backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+    position: relative; overflow: hidden; transition: all var(--transition);
+    animation: fadeSlideUp 0.5s ease both;
+  }
+  .stat:nth-child(1) { animation-delay: 0.05s; }
+  .stat:nth-child(2) { animation-delay: 0.1s; }
+  .stat:nth-child(3) { animation-delay: 0.15s; }
+  .stat:nth-child(4) { animation-delay: 0.2s; }
+  .stat::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--border); transition: all var(--transition);
+  }
+  .stat.critical::before { background: linear-gradient(90deg, var(--red), transparent); }
+  .stat.warn::before { background: linear-gradient(90deg, var(--orange), transparent); }
+  .stat:nth-child(3)::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .stat:nth-child(4)::before { background: linear-gradient(90deg, var(--green), transparent); }
+  .stat:hover { border-color: var(--border-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+  .stat-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; background: rgba(99, 102, 241, 0.1);
+    flex-shrink: 0; transition: all var(--transition);
+  }
+  .stat.critical .stat-icon { background: var(--red-glow); }
+  .stat.warn .stat-icon { background: var(--orange-glow); }
+  .stat:nth-child(3) .stat-icon { background: var(--accent-glow); }
+  .stat:nth-child(4) .stat-icon { background: var(--green-glow); }
+  .stat:hover .stat-icon { transform: scale(1.08) rotate(-4deg); }
+  .stat-val {
+    font-size: 22px; font-weight: 800; line-height: 1;
+    letter-spacing: -0.03em; transition: color var(--transition);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-val.counting { animation: countUp 0.3s ease; }
+  .stat-lbl {
+    font-size: 10px; color: var(--text2); margin-top: 3px;
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .stat.critical .stat-val { color: var(--red); }
+  .stat.warn .stat-val { color: var(--orange); }
+
+  /* MAIN */
+  .main { display: grid; grid-template-columns: 1fr 360px; flex: 1; overflow: hidden; min-height: 0; gap: 0; }
+
+  /* FEED PANEL */
+  .feed-panel {
+    padding: 12px 12px 12px 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    overflow: hidden; min-height: 0;
+    animation: fadeSlideRight 0.6s ease both; animation-delay: 0.15s;
+  }
+  /* 🎥 Modern Camera Selector Styles */
+  .camera-selector-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.camera-selector {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.camera-selector:hover {
+    border-color: rgba(99, 102, 241, 0.6);
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.2),
+                0 0 20px rgba(99, 102, 241, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.camera-selector:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15),
+                0 6px 24px rgba(99, 102, 241, 0.2);
+}
+
+.camera-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    color: var(--accent2);
+    background: rgba(99, 102, 241, 0.1);
+    border-right: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.camera-selector select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    cursor: pointer;
+    min-width: 140px;
+    letter-spacing: 0.02em;
+}
+
+.camera-selector select option {
+    background: var(--surface-solid);
+    color: var(--text);
+    padding: 8px;
+    font-family: var(--font);
+}
+
+.selector-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    color: var(--text2);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.camera-selector:focus-within .selector-arrow {
+    transform: rotate(180deg);
+    color: var(--accent2);
+}
+
+/* Custom scrollbar for dropdown */
+.camera-selector select::-webkit-scrollbar {
+    width: 6px;
+}
+
+.camera-selector select::-webkit-scrollbar-track {
+    background: var(--surface-solid);
+}
+
+.camera-selector select::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 3px;
+}
+  
+  .feed-title::before {
+    content: ''; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 8px var(--green-glow);
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  .feed-time {
+    font-size: 11px; color: var(--text2); font-weight: 500;
+    font-variant-numeric: tabular-nums; font-family: var(--mono);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 50px;
+  }
+
+  /* FEED BOX */
+  .feed-box {
+    background: #000; border-radius: var(--radius); overflow: hidden;
+    position: relative; flex: 1; min-height: 0;
+    border: 1px solid var(--border); transition: border-color var(--transition);
+    animation: scaleIn 0.6s ease both; animation-delay: 0.25s;
+    display: flex;
+  }
+  .feed-box:hover { border-color: var(--border-hover); }
+  .feed-box img { width: 100%; height: 100%; object-fit: contain; display: block; flex: 1; background: #000; }
+  .feed-top-mask { display: none; }
+  .feed-bottom-mask { display: none; }
+  .feed-box.camera-on .feed-bottom-mask { opacity: 0.3; }
+  .feed-vignette {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.4s ease;
+  }
+  .feed-box.camera-on .feed-vignette { opacity: 1; }
+  .corner {
+    position: absolute; width: 28px; height: 28px;
+    border-color: var(--accent); border-style: solid; border-width: 0;
+    opacity: 0; z-index: 4; transition: opacity 0.4s ease; pointer-events: none;
+  }
+  .feed-box.camera-on .corner { opacity: 0.8; animation: bracketIn 0.5s ease both; }
+  .corner.tl { top: 12px; left: 12px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 4px; animation-delay: 0.1s; }
+  .corner.tr { top: 12px; right: 12px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 4px; animation-delay: 0.2s; }
+  .corner.bl { bottom: 12px; left: 12px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 4px; animation-delay: 0.3s; }
+  .corner.br { bottom: 12px; right: 12px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; animation-delay: 0.4s; }
+  .feed-box .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+    z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.4s ease;
+  }
+  .feed-box.camera-on .scan-line { opacity: 0.6; animation: scanLine 4s linear infinite; }
+  .cctv-label {
+    position: absolute; font-family: var(--mono); font-size: 11px; font-weight: 600;
+    color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    z-index: 5; opacity: 0; transition: opacity 0.4s ease;
+    pointer-events: none; letter-spacing: 0.04em;
+  }
+  .feed-box.camera-on .cctv-label { opacity: 1; }
+  .cctv-cam-id {
+    top: 14px; right: 80px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    padding: 4px 10px; border-radius: 6px; border-left: 2px solid var(--accent); font-size: 10px;
+  }
+  .cctv-timestamp {
+    bottom: 14px; left: 48px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    padding: 4px 10px; border-radius: 6px; font-variant-numeric: tabular-nums; font-size: 10px;
+  }
+  .cctv-rec {
+    bottom: 14px; right: 48px; display: flex; align-items: center; gap: 6px;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    padding: 4px 10px; border-radius: 6px; font-size: 10px;
+  }
+  .cctv-rec-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--red);
+    animation: recordingPulse 1.5s ease-in-out infinite; box-shadow: 0 0 6px var(--red-glow);
+  }
+  .feed-badge {
+    position: absolute; top: 12px; right: 12px;
+    display: flex; flex-direction: column; gap: 5px; align-items: flex-end; z-index: 6;
+  }
+  .badge-live {
+    background: var(--red); color: #fff; font-size: 9px; font-weight: 700;
+    padding: 3px 8px; border-radius: 50px; letter-spacing: 0.08em;
+    animation: livePulse 1.5s ease-in-out infinite;
+    box-shadow: 0 2px 10px var(--red-glow); font-family: var(--font);
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .feed-box.camera-on .badge-live { opacity: 1; }
+  .badge-fps {
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    color: var(--green); font-size: 9px; font-weight: 600;
+    padding: 3px 8px; border-radius: 50px; border: 1px solid rgba(16,185,129,0.3);
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  .feed-box.camera-on .badge-fps { opacity: 1; }
+
+  /* BOOT OVERLAY */
+  .boot-overlay {
+    position: absolute; inset: 0; background: #000; z-index: 10;
+    display: none; flex-direction: column; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .boot-overlay.active { display: flex; }
+  .boot-grid {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(99,102,241,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.15) 1px, transparent 1px);
+    background-size: 40px 40px; opacity: 0;
+    animation: gridReveal 0.6s ease forwards; animation-delay: 0.2s;
+  }
+  .boot-beam {
+    position: absolute; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    box-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent-glow);
+    top: 0; animation: scanLine 1.5s ease-in-out infinite; opacity: 0.8;
+  }
+  .boot-content {
+    position: relative; z-index: 2; text-align: center;
+    display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 20px;
+  }
+  .boot-shield {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 0 40px var(--accent-glow), 0 0 80px var(--accent-glow);
+    animation: scaleIn 0.5s ease both, float 3s ease-in-out infinite 0.5s;
+  }
+  .boot-title {
+    font-family: var(--mono); font-size: 14px; font-weight: 700;
+    color: var(--accent2); letter-spacing: 0.15em; text-transform: uppercase;
+    opacity: 0; animation: bootFadeIn 0.4s ease forwards; animation-delay: 0.3s;
+  }
+  .boot-status {
+    font-family: var(--mono); font-size: 12px; color: var(--green);
+    letter-spacing: 0.05em; min-height: 20px; display: flex; align-items: center; gap: 8px;
+  }
+  .boot-status .cursor {
+    display: inline-block; width: 8px; height: 14px;
+    background: var(--green); animation: blink 0.8s step-end infinite;
+  }
+  .boot-progress {
+    width: 280px; height: 3px; background: rgba(99,102,241,0.15);
+    border-radius: 3px; overflow: hidden; position: relative;
+  }
+  .boot-progress-bar {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 3px; width: 0%; box-shadow: 0 0 10px var(--accent-glow);
+    transition: width 0.3s ease;
+  }
+  .boot-log {
+    font-family: var(--mono); font-size: 10px; color: var(--text3);
+    text-align: left; width: 280px; min-height: 60px; line-height: 1.6;
+  }
+  .boot-log-line { opacity: 0; animation: bootFadeIn 0.3s ease forwards; }
+  .boot-log-line .ok { color: var(--green); }
+  .boot-log-line .warn { color: var(--orange); }
+  .boot-log-line .info { color: var(--accent2); }
+  .boot-flash {
+    position: absolute; inset: 0; background: white;
+    opacity: 0; pointer-events: none; z-index: 11;
+  }
+  .boot-flash.active { animation: flashIn 0.4s ease forwards; }
+
+  /* CONTROLS */
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+  .btn {
+    padding: 9px 18px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; border: none; transition: all var(--transition);
+    position: relative; overflow: hidden; letter-spacing: 0.01em;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn .ripple {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.4); transform: scale(0);
+    animation: ripple 0.6s linear; pointer-events: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    color: #fff; box-shadow: 0 2px 10px var(--accent-glow);
+  }
+  .btn-primary:hover { box-shadow: 0 6px 20px var(--accent-glow); transform: translateY(-1px); }
+  .btn-stop {
+    background: linear-gradient(135deg, var(--red), #dc2626);
+    color: #fff; box-shadow: 0 2px 10px var(--red-glow);
+  }
+  .btn-stop:hover { box-shadow: 0 6px 20px var(--red-glow); transform: translateY(-1px); }
+  .btn-outline {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text2); backdrop-filter: blur(8px);
+  }
+  .btn-outline:hover {
+    border-color: var(--accent); color: var(--text);
+    transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
+  .btn-nv {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--text2); padding: 9px 16px; backdrop-filter: blur(8px);
+  }
+  .btn-nv.night {
+    border-color: var(--green); color: var(--green);
+    background: rgba(16,185,129,0.08); box-shadow: 0 0 12px rgba(16,185,129,0.1);
+  }
+  .btn-nv.thermal {
+    border-color: var(--orange); color: var(--orange);
+    background: rgba(245,158,11,0.08); box-shadow: 0 0 12px rgba(245,158,11,0.1);
+  }
+  .btn-nv.auto {
+    border-color: var(--accent); color: var(--accent2);
+    background: rgba(99,102,241,0.08); box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden; min-height: 0;
+    background: var(--surface); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    animation: fadeSlideUp 0.6s ease both; animation-delay: 0.3s;
+  }
+  .panel-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; position: relative; }
+  .tab {
+    flex: 1; padding: 14px; font-size: 12px; font-weight: 600;
+    font-family: var(--font); color: var(--text2); cursor: pointer;
+    text-align: center; border-bottom: 2px solid transparent;
+    transition: all var(--transition); position: relative; letter-spacing: 0.02em;
+  }
+  .tab:hover { color: var(--text); background: var(--surface-hover); }
+  .tab.active { color: var(--accent2); border-bottom-color: var(--accent); }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 20%; right: 20%;
+    height: 2px; background: var(--accent); border-radius: 2px;
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .panel-content { flex: 1; overflow-y: auto; padding: 12px; }
+
+  /* ALERTS */
+  .alert-item {
+    background: var(--surface-solid); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px;
+    position: relative; overflow: hidden; transition: all var(--transition);
+    animation: alertSlideIn 0.4s ease both;
+  }
+  .alert-item::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px; border-radius: 0 3px 3px 0;
+  }
+  .alert-item:has(.alert-type.CRITICAL)::before { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+  .alert-item:has(.alert-type.HIGH)::before { background: var(--orange); box-shadow: 0 0 8px var(--orange-glow); }
+  .alert-item:has(.alert-type.MEDIUM)::before { background: var(--yellow); }
+  .alert-item:hover {
+    border-color: var(--border-hover); transform: translateX(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+  .alert-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .alert-type { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .alert-type.CRITICAL { color: var(--red); }
+  .alert-type.HIGH { color: var(--orange); }
+  .alert-type.MEDIUM { color: var(--yellow); }
+  .sev-badge {
+    font-size: 9px; padding: 2px 8px; border-radius: 50px;
+    font-weight: 700; letter-spacing: 0.04em; font-family: var(--font);
+  }
+  .sev-badge.CRITICAL { background: var(--red-glow); color: var(--red); }
+  .sev-badge.HIGH { background: var(--orange-glow); color: var(--orange); }
+  .sev-badge.MEDIUM { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .alert-msg { font-size: 12px; color: var(--text); margin-bottom: 6px; line-height: 1.4; font-weight: 500; }
+  .alert-meta { font-size: 10px; color: var(--text3); display: flex; gap: 8px; align-items: center; }
+  .ev-link {
+    font-size: 10px; color: var(--accent2); text-decoration: none;
+    font-weight: 600; transition: color var(--transition);
+  }
+  .ev-link:hover { color: var(--accent); text-decoration: underline; }
+
+  /* EVIDENCE */
+  .ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ev-card {
+    background: var(--surface-solid); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); overflow: hidden;
+    transition: all var(--transition); animation: scaleIn 0.4s ease both;
+  }
+  .ev-card:hover {
+    border-color: var(--border-hover); transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+  .ev-card .ev-img-wrap { position: relative; overflow: hidden; cursor: pointer; }
+  .ev-card img {
+    width: 100%; aspect-ratio: 16/9; object-fit: cover;
+    cursor: pointer; display: block; transition: transform 0.4s ease;
+  }
+  .ev-card:hover img { transform: scale(1.05); }
+  .ev-card .ev-img-wrap::after {
+    content: ''; position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+    font-size: 20px; opacity: 0; transition: opacity var(--transition);
+  }
+  .ev-card:hover .ev-img-wrap::after { opacity: 1; }
+  .ev-bottom { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; }
+  .ev-label {
+    font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; font-family: var(--font);
+  }
+  .ev-label.WEAPON { color: var(--red); }
+  .ev-label.LOITER { color: var(--orange); }
+  .ev-label.FIGHT { color: var(--red); }
+  .ev-delete {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; padding: 2px 6px; font-size: 12px;
+    border-radius: 4px; transition: all var(--transition);
+  }
+  .ev-delete:hover { color: var(--red); background: var(--red-glow); }
+
+  /* TOAST */
+  .toast-container {
+    position: fixed; top: 72px; right: 20px; z-index: 9998;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  .toast {
+    background: var(--surface-solid); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    min-width: 280px; max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    pointer-events: auto; position: relative; overflow: hidden;
+  }
+  .toast.removing { animation: toastOut 0.3s ease forwards; }
+  .toast::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; }
+  .toast.success::before { background: var(--green); box-shadow: 0 0 8px var(--green-glow); }
+  .toast.error::before { background: var(--red); box-shadow: 0 0 8px var(--red-glow); }
+  .toast.info::before { background: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+  .toast.warning::before { background: var(--orange); box-shadow: 0 0 8px var(--orange-glow); }
+  .toast-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; flex-shrink: 0;
+  }
+  .toast.success .toast-icon { background: var(--green-glow); }
+  .toast.error .toast-icon { background: var(--red-glow); }
+  .toast.info .toast-icon { background: var(--accent-glow); }
+  .toast.warning .toast-icon { background: var(--orange-glow); }
+  .toast-content { flex: 1; min-width: 0; }
+  .toast-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .toast-msg { font-size: 11px; color: var(--text2); line-height: 1.4; }
+  .toast-close {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; padding: 4px; font-size: 14px;
+    border-radius: 4px; transition: all var(--transition); flex-shrink: 0;
+  }
+  .toast-close:hover { color: var(--text); background: var(--surface-hover); }
+
+  /* GPU TOGGLE */
+  #gpuToggle {
+    position: fixed; bottom: 20px; right: 20px; z-index: 999; display: none;
+    padding: 10px 20px; border-radius: 50px; border: 1.5px solid var(--green);
+    background: rgba(6,8,15,0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    color: var(--green); font-size: 12px; font-weight: 700; font-family: var(--font);
+    cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 20px var(--green-glow);
+    transition: all var(--transition); letter-spacing: 0.02em;
+    animation: float 3s ease-in-out infinite;
+  }
+  #gpuToggle:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 30px var(--green-glow); }
+  #gpuToggle:active { transform: scale(0.96); }
+  #gpuToggle.cpu { border-color: var(--text3); color: var(--text3); box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* LIGHTBOX MODAL */
+  .modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: lightboxIn 0.3s ease both;
+  }
+  .modal.open { display: flex; }
+  .modal-img-container {
+    position: relative;
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: grab;
+  }
+  .modal-img-container.dragging { cursor: grabbing; }
+  .modal-img-container img {
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center center;
+    user-select: none;
+    -webkit-user-drag: none;
+    animation: lightboxImgIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    pointer-events: none;
+  }
+  .modal.closing img { animation: lightboxImgOut 0.2s ease both; }
+  .modal-topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 10001;
+    pointer-events: none;
+  }
+  .modal-topbar > * { pointer-events: auto; }
+  .modal-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .modal-info-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .modal-info-label .label-badge {
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .modal-info-label .label-badge.WEAPON { background: var(--red-glow); color: var(--red); }
+  .modal-info-label .label-badge.LOITER { background: var(--orange-glow); color: var(--orange); }
+  .modal-info-label .label-badge.FIGHT { background: var(--red-glow); color: var(--red); }
+  .modal-info-label .label-badge.DEFAULT { background: var(--accent-glow); color: var(--accent2); }
+  .modal-info-meta {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+  .modal-close-btn {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50px;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all var(--transition);
+  }
+  .modal-close-btn:hover {
+    background: var(--red);
+    border-color: var(--red);
+    transform: rotate(90deg) scale(1.05);
+    box-shadow: 0 4px 20px var(--red-glow);
+  }
+  .modal-toolbar {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 10px;
+    z-index: 10001;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .tool-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text2);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    transition: all var(--transition);
+    font-family: var(--font);
+  }
+  .tool-btn:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+    border-color: var(--border);
+    transform: translateY(-1px);
+  }
+  .tool-btn:active { transform: scale(0.92); }
+  .tool-btn.active { color: var(--accent2); }
+  .tool-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .tool-btn:disabled:hover { background: transparent; transform: none; }
+  .tool-divider {
+    width: 1px; height: 24px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .zoom-level {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    min-width: 48px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .zoom-level.zooming {
+    color: var(--accent2);
+    animation: zoomPulse 0.3s ease;
+  }
+  .modal-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    z-index: 10001;
+    transition: all var(--transition);
+  }
+  .modal-nav:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 4px 20px var(--accent-glow);
+    transform: translateY(-50%) scale(1.08);
+  }
+  .modal-nav:active { transform: translateY(-50%) scale(0.95); }
+  .modal-nav.prev { left: 20px; }
+  .modal-nav.next { right: 20px; }
+  .modal-nav:disabled { opacity: 0.2; cursor: not-allowed; }
+  .modal-nav:disabled:hover { background: rgba(15,23,42,0.7); border-color: var(--border); transform: translateY(-50%); box-shadow: none; }
+  .modal-counter {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text2);
+    z-index: 10001;
+    font-variant-numeric: tabular-nums;
+  }
+  .modal-hints {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+    z-index: 10001;
+    opacity: 0.7;
+  }
+  .modal-hints kbd {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-right: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  .empty-state {
+    color: var(--text3); font-size: 12px; text-align: center;
+    padding: 48px 0; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .empty-state-icon { font-size: 28px; opacity: 0.4; margin-bottom: 4px; animation: float 3s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:14px">
+    <div class="logo">
+      <div class="logo-icon">🛡️</div>
+      CampusGuard <span>v2.0 — YOLO26</span>
+    </div>
+    <div class="cam-status">
+      <div class="cam-dot" id="camDot"></div>
+      <span id="camStatusText">Camera Inactive</span>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="theme-btn" onclick="toggleTheme()"> Dark</button>
+    <div class="user-chip">👤 {{ user.username }} ({{ user.role }})</div>
+    <a href="/logout"><button class="logout-btn">🚪 Logout</button></a>
+  </div>
+</nav>
+
+<div class="stats">
+  <div class="stat critical">
+    <div class="stat-icon">🚨</div>
+    <div><div class="stat-val" id="statCritical">0</div><div class="stat-lbl">Critical Alerts</div></div>
+  </div>
+  <div class="stat warn">
+    <div class="stat-icon">⚠️</div>
+    <div><div class="stat-val" id="statToday">0</div><div class="stat-lbl">Today's Alerts</div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">️</div>
+    <div><div class="stat-val" id="statObjects">0</div><div class="stat-lbl">Objects Detected</div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-icon">📊</div>
+    <div><div class="stat-val" id="statTotal">0</div><div class="stat-lbl">Total Logged</div></div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="feed-panel">
+    <div class="feed-header">
+     <div class="feed-title">Live Surveillance Feed</div>
+     
+    <!-- 🎥 Modern Camera Selector -->
+<div class="camera-selector-wrapper">
+    <div class="camera-selector">
+        <div class="camera-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+            </svg>
+        </div>
+        <select id="camera-select" onchange="switchCamera(this.value)">
+            <option value="CAM-01">Loading cameras...</option>
+        </select>
+        <div class="selector-arrow">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </div>
+    </div>
+</div>
+     
+     <div class="feed-time" id="feedTime"></div>
+   </div>
+    <div class="feed-box" id="feedBox">
+      <div class="feed-vignette"></div>
+      <div class="feed-top-mask"></div>
+      <div class="feed-bottom-mask"></div>
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="scan-line"></div>
+      <div class="cctv-label cctv-cam-id">CAM-01 • MAIN GATE</div>
+      <div class="cctv-label cctv-timestamp" id="cctvTimestamp">--:--:--</div>
+      <div class="cctv-label cctv-rec">
+        <div class="cctv-rec-dot"></div><span>REC</span>
+      </div>
+      <img id="videoFeed" src="/video_feed/CAM-01" alt="Camera feed">
+      <div class="feed-badge">
+        <span class="badge-live" id="liveBadge">● LIVE</span>
+        <span class="badge-fps" id="fpsBadge">-- FPS</span>
+      </div>
+      <div class="boot-overlay" id="bootOverlay">
+        <div class="boot-grid"></div>
+        <div class="boot-beam"></div>
+        <div class="boot-content">
+          <div class="boot-shield">🛡️</div>
+          <div class="boot-title">CampusGuard System</div>
+          <div class="boot-status" id="bootStatus">
+            <span id="bootStatusText">INITIALIZING</span>
+            <span class="cursor"></span>
+          </div>
+          <div class="boot-progress">
+            <div class="boot-progress-bar" id="bootProgressBar"></div>
+          </div>
+          <div class="boot-log" id="bootLog"></div>
+        </div>
+      </div>
+      <div class="boot-flash" id="bootFlash"></div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-primary" onclick="startCamera()">▶ Start Camera</button>
+      <button class="btn btn-stop" onclick="stopCamera()">⏹ Stop</button>
+      <button class="btn btn-outline" onclick="takeScreenshot()"> Screenshot</button>
+      <button class="btn btn-nv" id="nvBtn" onclick="cycleNV()">🌙 NORMAL</button>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-tabs">
+      <div class="tab active" onclick="switchTab('alerts',this)">🚨 Alerts</div>
+      <div class="tab" onclick="switchTab('evidence',this)"> Evidence</div>
+    </div>
+    <div class="panel-content" id="tabAlerts">
+      <div id="alertsList">
+        <div class="empty-state"><div class="empty-state-icon">🔔</div>No alerts yet</div>
+      </div>
+    </div>
+    <div class="panel-content" id="tabEvidence" style="display:none">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+        <button class="btn btn-outline" style="font-size:11px;padding:6px 12px" onclick="deleteAllScreenshots()">🗑 Delete All</button>
+      </div>
+      <div class="ev-grid" id="evidenceGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX MODAL -->
+<div class="modal" id="imgModal">
+  <div class="modal-topbar">
+    <div class="modal-info">
+      <div class="modal-info-label" id="modalLabel">
+        <span id="modalLabelText">Evidence</span>
+        <span class="label-badge DEFAULT" id="modalLabelBadge">IMG</span>
+      </div>
+      <div class="modal-info-meta" id="modalMeta">—</div>
+    </div>
+    <button class="modal-close-btn" onclick="closeModal()" title="Close (Esc)">✕</button>
+  </div>
+  <div class="modal-counter" id="modalCounter">1 / 1</div>
+  <button class="modal-nav prev" id="modalPrev" onclick="navigateEvidence(-1)" title="Previous (←)">‹</button>
+  <button class="modal-nav next" id="modalNext" onclick="navigateEvidence(1)" title="Next (→)">›</button>
+  <div class="modal-img-container" id="modalImgContainer">
+    <img id="modalImg" src="" alt="Evidence">
+  </div>
+  <div class="modal-toolbar">
+    <button class="tool-btn" onclick="zoomOut()" title="Zoom Out (-)">🔍−</button>
+    <button class="tool-btn" onclick="resetZoom()" title="Reset (0)">⟲</button>
+    <button class="tool-btn" onclick="zoomIn()" title="Zoom In (+)">🔍+</button>
+    <div class="zoom-level" id="zoomLevel">100%</div>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" onclick="fitToScreen()" title="Fit (F)"></button>
+    <button class="tool-btn" onclick="fillScreen()" title="Fill"></button>
+    <div class="tool-divider"></div>
+    <button class="tool-btn" onclick="rotateImage(-90)" title="Rotate Left">↺</button>
+    <button class="tool-btn" onclick="rotateImage(90)" title="Rotate Right">↻</button>
+  </div>
+  <div class="modal-hints">
+    <span><kbd>←</kbd><kbd>→</kbd> Navigate</span>
+    <span><kbd>+</kbd><kbd>-</kbd> Zoom</span>
+    <span><kbd>R</kbd> Rotate</span>
+    <span><kbd>F</kbd> Fit</span>
+    <span><kbd>Esc</kbd> Close</span>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<button id="gpuToggle" onclick="toggleGPU()">⚡ GPU ON</button>
+
+<script>
+let nvModes  = ['NORMAL','NIGHT','THERMAL','AUTO'];
+let nvLabels = {NORMAL:'🌙 NORMAL',NIGHT:' NIGHT',THERMAL:'🌡 THERMAL',AUTO:'⚡ AUTO'};
+let nvIndex  = 0;
+let currentGPU = false;
+let cameraActive = false;
+let prevStats = { critical: 0, today: 0, objects: 0, total: 0 };
+
+let evidenceList = [];
+let currentEvidenceIndex = 0;
+let zoom = 1, rotation = 0, panX = 0, panY = 0;
+let isDragging = false, dragStartX = 0, dragStartY = 0;
+
+async function runBootSequence() {
+  const overlay = document.getElementById('bootOverlay');
+  const statusText = document.getElementById('bootStatusText');
+  const progressBar = document.getElementById('bootProgressBar');
+  const log = document.getElementById('bootLog');
+  overlay.classList.add('active');
+  log.innerHTML = '';
+  progressBar.style.width = '0%';
+  const stages = [
+    { text: 'INITIALIZING SYSTEM', progress: 10, delay: 400, log: null },
+    { text: 'LOADING YOLO26 MODEL', progress: 25, delay: 600, log: { text: '[ OK ] Neural network loaded', cls: 'ok' } },
+    { text: 'CONNECTING TO CAMERA', progress: 45, delay: 500, log: { text: '[ OK ] RTSP stream established', cls: 'ok' } },
+    { text: 'CALIBRATING DETECTION', progress: 65, delay: 500, log: { text: '[ OK ] Object detection ready', cls: 'ok' } },
+    { text: 'ENABLING NIGHT VISION', progress: 80, delay: 400, log: { text: '[ OK ] NV modes available', cls: 'ok' } },
+    { text: 'STARTING LIVE FEED', progress: 95, delay: 400, log: { text: '[ OK ] Feed streaming', cls: 'ok' } },
+    { text: 'SYSTEM ONLINE', progress: 100, delay: 300, log: { text: '[ READY ] CampusGuard active', cls: 'info' } },
+  ];
+  for (const stage of stages) {
+    statusText.textContent = stage.text;
+    progressBar.style.width = stage.progress + '%';
+    if (stage.log) {
+      const line = document.createElement('div');
+      line.className = 'boot-log-line';
+      line.innerHTML = `<span class="${stage.log.cls}">${stage.log.text}</span>`;
+      log.appendChild(line);
+      while (log.children.length > 4) log.removeChild(log.firstChild);
+    }
+    await sleep(stage.delay);
+  }
+  await sleep(300);
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function finishBoot() {
+  const overlay = document.getElementById('bootOverlay');
+  const flash = document.getElementById('bootFlash');
+  const feedBox = document.getElementById('feedBox');
+  flash.classList.add('active');
+  await sleep(200);
+  overlay.style.transition = 'opacity 0.4s ease';
+  overlay.style.opacity = '0';
+  await sleep(400);
+  overlay.classList.remove('active');
+  overlay.style.opacity = '';
+  overlay.style.transition = '';
+  flash.classList.remove('active');
+  feedBox.classList.add('camera-on');
+}
+
+async function startCamera() {
+  if (cameraActive) return;
+  cameraActive = true;
+  const bootPromise = runBootSequence();
+  try { await fetch('/api/start_camera', { method: 'POST' }); } catch(e) {}
+  document.getElementById('videoFeed').src = '/video_feed/CAM-01';
+  document.getElementById('camDot').classList.add('active');
+  document.getElementById('camStatusText').textContent = 'Camera Active';
+  await bootPromise;
+  await finishBoot();
+  showToast('Camera Online', 'Live feed is now streaming', 'success', '📹');
+}
+
+async function stopCamera() {
+  if (!cameraActive) return;
+  cameraActive = false;
+  try { await fetch('/api/stop_camera', { method: 'POST' }); } catch(e) {}
+  document.getElementById('videoFeed').src = '';
+  document.getElementById('camDot').classList.remove('active');
+  document.getElementById('camStatusText').textContent = 'Camera Inactive';
+  document.getElementById('feedBox').classList.remove('camera-on');
+  showToast('Camera Offline', 'Live feed stopped', 'info', '');
+}
+
+async function takeScreenshot() {
+  try {
+    // 1. Call the backend to actually save the image
+    const response = await fetch('/api/screenshot', { method: 'POST' });
+    const data = await response.json();
+    
+    // 2. If successful, show toast and refresh evidence
+    if (data.success) {
+      showToast('Screenshot Captured', 'Saved to Evidence tab', 'success', '📸');
+      loadEvidence(); 
+    } else {
+      showToast('Error', data.error || 'Failed to take screenshot', 'error', '⚠️');
+    }
+  } catch (e) {
+    showToast('Error', 'Could not connect to server', 'error', '⚠️');
+  }
+}
+
+function showToast(title, message, type = 'info', icon = 'ℹ️') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${message}</div>
+    </div>
+    <button class="toast-close" onclick="this.parentElement.classList.add('removing'); setTimeout(() => this.parentElement.remove(), 300)">✕</button>
+  `;
+  container.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.add('removing');
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 4000);
+}
+
+function animateValue(el, start, end, duration = 600) {
+  if (start === end) return;
+  const range = end - start;
+  const startTime = performance.now();
+  el.classList.add('counting');
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(start + range * eased);
+    el.textContent = current;
+    if (progress < 1) requestAnimationFrame(update);
+    else { el.textContent = end; setTimeout(() => el.classList.remove('counting'), 300); }
+  }
+  requestAnimationFrame(update);
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tabAlerts').style.display   = tab==='alerts'  ?'block':'none';
+  document.getElementById('tabEvidence').style.display = tab==='evidence'?'block':'none';
+  if (tab==='evidence') loadEvidence();
+}
+
+async function loadAlerts() {
+  try {
+    const r = await fetch('/api/alerts');
+    const data = await r.json();
+    const list = document.getElementById('alertsList');
+    if (!data.length) {
+      list.innerHTML='<div class="empty-state"><div class="empty-state-icon">🔔</div>No alerts yet</div>';
+      return;
+    }
+            // --- ALARM SYSTEM ---
+        // Check if there are new alerts and if the newest one is CRITICAL
+        const currentAlertCount = document.querySelectorAll('.alert-item').length;
+        if (data.length > currentAlertCount && data.length > 0) {
+            if (data[0].severity === 'CRITICAL') {
+                // Generate a loud siren sound using Web Audio API (No files needed!)
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+                
+                // Flash the screen red
+                document.body.style.boxShadow = "inset 0 0 100px red";
+                setTimeout(() => { document.body.style.boxShadow = "none"; }, 500);
+            }
+        }
+        // --- END ALARM SYSTEM ---
+    list.innerHTML = data.map((a, i) => `
+      <div class="alert-item" style="animation-delay:${i * 0.05}s">
+        <div class="alert-header">
+          <span class="alert-type ${a.severity}">${a.type.replace(/_/g,' ')}</span>
+          <span class="sev-badge ${a.severity}">${a.severity}</span>
+        </div>
+        <div class="alert-msg">${a.message}</div>
+        <div class="alert-meta">
+          <span>${new Date(a.timestamp).toLocaleTimeString()}</span>
+          ${a.zone?`<span>📍 ${a.zone}</span>`:''}
+          ${a.screenshot?`<a class="ev-link" href="/static/screenshots/${a.screenshot}" target="_blank">📸 Evidence</a>`:''}
+        </div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const data = await r.json();
+    const newCritical = data.critical || 0;
+    const newToday = data.today || 0;
+    const newTotal = data.total || 0;
+    if (newCritical !== prevStats.critical) {
+      animateValue(document.getElementById('statCritical'), prevStats.critical, newCritical);
+      if (newCritical > prevStats.critical) showToast('Critical Alert', `${newCritical - prevStats.critical} new critical event(s)`, 'error', '🚨');
+    }
+    if (newToday !== prevStats.today) animateValue(document.getElementById('statToday'), prevStats.today, newToday);
+    if (newTotal !== prevStats.total) animateValue(document.getElementById('statTotal'), prevStats.total, newTotal);
+    prevStats = { critical: newCritical, today: newToday, objects: prevStats.objects, total: newTotal };
+  } catch(e) {}
+}
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/detection_status');
+    const data = await r.json();
+    const newObjects = data.detections || 0;
+    if (newObjects !== prevStats.objects) {
+      animateValue(document.getElementById('statObjects'), prevStats.objects, newObjects, 400);
+      prevStats.objects = newObjects;
+    }
+    if (data.fps) document.getElementById('fpsBadge').textContent = `${data.fps} FPS`;
+  } catch(e) {}
+}
+
+async function loadEvidence() {
+  try {
+    const r = await fetch('/api/screenshots');
+    const data = await r.json();
+    const grid = document.getElementById('evidenceGrid');
+    evidenceList = data;
+    if (!data.length) {
+      grid.innerHTML='<div class="empty-state" style="grid-column:span 2"><div class="empty-state-icon"></div>No evidence yet</div>';
+      return;
+    }
+    grid.innerHTML = data.map((s, i) => `
+      <div class="ev-card" style="animation-delay:${i * 0.05}s">
+        <div class="ev-img-wrap" onclick="openModalAtIndex(${i})">
+          <img src="${s.url}" alt="${s.label}" loading="lazy">
+        </div>
+        <div class="ev-bottom">
+          <div class="ev-label ${s.label}">${s.label}</div>
+          <button class="ev-delete" onclick="event.stopPropagation(); deleteShot('${s.filename}')">🗑</button>
+        </div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function deleteShot(fn) {
+  if (!confirm('Delete?')) return;
+  await fetch('/api/screenshots/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:fn})});
+  loadEvidence();
+  showToast('Deleted', 'Screenshot removed', 'info', '🗑');
+}
+
+async function deleteAllScreenshots() {
+  if (!confirm('Delete ALL screenshots?')) return;
+  await fetch('/api/screenshots/delete_all',{method:'POST'});
+  loadEvidence();
+  showToast('Cleared', 'All screenshots deleted', 'info', '🗑');
+}
+
+function openModalAtIndex(index) {
+  if (!evidenceList.length) return;
+  currentEvidenceIndex = index;
+  resetZoomState();
+  renderCurrentEvidence();
+  document.getElementById('imgModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function openModal(src) {
+  const idx = evidenceList.findIndex(e => e.url === src);
+  openModalAtIndex(idx >= 0 ? idx : 0);
+}
+
+function closeModal() {
+  const modal = document.getElementById('imgModal');
+  modal.classList.add('closing');
+  setTimeout(() => {
+    modal.classList.remove('open', 'closing');
+    document.getElementById('modalImg').src = '';
+    document.body.style.overflow = '';
+    resetZoomState();
+  }, 200);
+}
+
+function renderCurrentEvidence() {
+  const item = evidenceList[currentEvidenceIndex];
+  if (!item) return;
+  const img = document.getElementById('modalImg');
+  img.src = item.url;
+  img.alt = item.label || 'Evidence';
+  const labelText = document.getElementById('modalLabelText');
+  const labelBadge = document.getElementById('modalLabelBadge');
+  labelText.textContent = (item.label || 'Evidence').replace(/_/g, ' ');
+  labelBadge.textContent = item.label || 'IMG';
+  labelBadge.className = 'label-badge ' + (['WEAPON','LOITER','FIGHT'].includes(item.label) ? item.label : 'DEFAULT');
+  document.getElementById('modalMeta').textContent = item.filename || item.url.split('/').pop() || '—';
+  document.getElementById('modalCounter').textContent = `${currentEvidenceIndex + 1} / ${evidenceList.length}`;
+  document.getElementById('modalPrev').disabled = currentEvidenceIndex === 0;
+  document.getElementById('modalNext').disabled = currentEvidenceIndex === evidenceList.length - 1;
+  resetZoomState();
+}
+
+function navigateEvidence(dir) {
+  const newIndex = currentEvidenceIndex + dir;
+  if (newIndex < 0 || newIndex >= evidenceList.length) return;
+  const img = document.getElementById('modalImg');
+  img.style.opacity = '0';
+  img.style.transform = `scale(${0.95})`;
+  setTimeout(() => {
+    currentEvidenceIndex = newIndex;
+    resetZoomState();
+    renderCurrentEvidence();
+    img.style.opacity = '1';
+    img.style.transform = '';
+  }, 150);
+}
+
+function applyTransform() {
+  const img = document.getElementById('modalImg');
+  img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom}) rotate(${rotation}deg)`;
+  document.getElementById('zoomLevel').textContent = Math.round(zoom * 100) + '%';
+  const zl = document.getElementById('zoomLevel');
+  zl.classList.remove('zooming');
+  void zl.offsetWidth;
+  zl.classList.add('zooming');
+}
+
+function zoomIn() { zoom = Math.min(zoom * 1.25, 5); applyTransform(); }
+function zoomOut() { zoom = Math.max(zoom / 1.25, 0.25); if (zoom <= 1) { panX = 0; panY = 0; } applyTransform(); }
+function resetZoom() { resetZoomState(); applyTransform(); }
+function resetZoomState() { zoom = 1; rotation = 0; panX = 0; panY = 0; document.getElementById('zoomLevel').textContent = '100%'; }
+function fitToScreen() { resetZoomState(); applyTransform(); showToast('Fit to Screen', 'Image fits within view', 'info', '⊡'); }
+function fillScreen() { zoom = 1.5; applyTransform(); showToast('Fill View', 'Zoomed to 150%', 'info', '⊞'); }
+function rotateImage(deg) { rotation = (rotation + deg + 360) % 360; applyTransform(); }
+
+const modalContainer = document.getElementById('modalImgContainer');
+modalContainer.addEventListener('mousedown', (e) => {
+  if (zoom <= 1) return;
+  isDragging = true;
+  dragStartX = e.clientX - panX;
+  dragStartY = e.clientY - panY;
+  modalContainer.classList.add('dragging');
+  e.preventDefault();
+});
+document.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  panX = e.clientX - dragStartX;
+  panY = e.clientY - dragStartY;
+  applyTransform();
+});
+document.addEventListener('mouseup', () => {
+  if (isDragging) { isDragging = false; modalContainer.classList.remove('dragging'); }
+});
+modalContainer.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (e.deltaY < 0) zoomIn(); else zoomOut();
+}, { passive: false });
+modalContainer.addEventListener('dblclick', () => {
+  if (zoom > 1) resetZoom(); else { zoom = 2; applyTransform(); }
+});
+
+document.addEventListener('keydown', (e) => {
+  const modal = document.getElementById('imgModal');
+  if (!modal.classList.contains('open')) return;
+  switch(e.key) {
+    case 'Escape': closeModal(); break;
+    case 'ArrowLeft': e.preventDefault(); navigateEvidence(-1); break;
+    case 'ArrowRight': e.preventDefault(); navigateEvidence(1); break;
+    case '+': case '=': e.preventDefault(); zoomIn(); break;
+    case '-': case '_': e.preventDefault(); zoomOut(); break;
+    case '0': e.preventDefault(); resetZoom(); break;
+    case 'f': case 'F': e.preventDefault(); fitToScreen(); break;
+    case 'r': case 'R': e.preventDefault(); rotateImage(90); break;
+  }
+});
+
+async function cycleNV() {
+  nvIndex = (nvIndex+1) % nvModes.length;
+  const mode = nvModes[nvIndex];
+  await fetch('/api/night_vision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
+  updateNVBtn(mode);
+  showToast('Night Vision', `Mode: ${mode}`, 'info', '');
+}
+
+function updateNVBtn(mode) {
+  const btn = document.getElementById('nvBtn');
+  btn.textContent = nvLabels[mode]||mode;
+  btn.className = 'btn btn-nv'+(mode==='NIGHT'?' night':mode==='THERMAL'?' thermal':mode==='AUTO'?' auto':'');
+  nvIndex = nvModes.indexOf(mode);
+}
+
+setInterval(async()=>{
+  try{
+    const r=await fetch('/api/night_vision');
+    const d=await r.json();
+    if(nvModes[nvIndex]!==d.mode) updateNVBtn(d.mode);
+    if(d.mode==='AUTO') document.getElementById('nvBtn').textContent=d.auto_active?'🌙 AUTO-NV':'🌞 AUTO-DAY';
+  }catch(e){}
+},3000);
+
+async function initGPU() {
+  try{
+    const r=await fetch('/api/device');
+    const d=await r.json();
+    currentGPU=d.current==='cuda';
+    const btn=document.getElementById('gpuToggle');
+    if(d.gpu_available){ btn.style.display='block'; updateGPUBtn(d.current); }
+  }catch(e){}
+}
+
+function updateGPUBtn(device){
+  const btn=document.getElementById('gpuToggle');
+  currentGPU=device==='cuda';
+  btn.textContent=currentGPU?'⚡ GPU ON':'💻 CPU';
+  currentGPU?btn.classList.remove('cpu'):btn.classList.add('cpu');
+}
+
+async function toggleGPU(){
+  const nd=currentGPU?'cpu':'cuda';
+  document.getElementById('gpuToggle').style.opacity='0.5';
+  try{
+    const r=await fetch('/api/device',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device:nd})});
+    const d=await r.json();
+    if(d.success) { updateGPUBtn(d.device); showToast('Device Switched', `Now using ${d.device.toUpperCase()}`, 'success', ''); }
+  }catch(e){}
+  document.getElementById('gpuToggle').style.opacity='1';
+}
+
+function toggleTheme(){
+  const html=document.documentElement;
+  const dark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',dark?'light':'dark');
+  document.querySelector('.theme-btn').textContent=dark?'🌙 Dark':'️ Light';
+}
+
+function updateClock(){
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString();
+  document.getElementById('feedTime').textContent = timeStr;
+  const dateStr = now.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  document.getElementById('cctvTimestamp').textContent = `${dateStr} ${timeStr}`;
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.btn');
+  if (!btn) return;
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  loadAlerts(); loadStats(); loadEvidence(); initGPU(); updateClock();
+  setInterval(loadAlerts,3000);
+  setInterval(loadStats,5000);
+  setInterval(loadStatus,2000);
+  setInterval(updateClock,1000);
+});
+   // Load available cameras on page load
+   document.addEventListener("DOMContentLoaded", function() {
+       fetch('/api/cameras')
+           .then(response => response.json())
+           .then(cameras => {
+               const select = document.getElementById('camera-select');
+               if(select) {
+                   select.innerHTML = ''; // Clear "Loading..." text
+                   cameras.forEach(cam => {
+                       const option = document.createElement('option');
+                       option.value = cam.id;
+                       option.text = `${cam.id} - ${cam.name}`;
+                       select.appendChild(option);
+                   });
+               }
+           })
+           .catch(err => console.error("Error loading cameras:", err));
+   });
+
+   // Switch the video feed when dropdown changes
+   function switchCamera(camId) {
+       const feed = document.getElementById('videoFeed');
+       // Add a timestamp to prevent browser caching
+       feed.src = `/video_feed/${camId}?t=${new Date().getTime()}`;
+       
+       // Update the CCTV label on the screen overlay
+       const camLabel = document.querySelector('.cctv-cam-id');
+       if(camLabel) {
+           const select = document.getElementById('camera-select');
+           const selectedText = select.options[select.selectedIndex].text;
+           camLabel.textContent = selectedText.toUpperCase();
+       }
+   }
+</script>
+</body>
+</html>

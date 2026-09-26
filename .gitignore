@@ -1,0 +1,19 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# Python Cache & Databases
+__pycache__/
+*.pyc
+*.db
+*.sqlite3
+
+# Large Model Files (if over 50MB)
+*.pt
+*.onnx
+*.weights
+
+# Local User Data & Evidence
+data/
+static/screenshots/
